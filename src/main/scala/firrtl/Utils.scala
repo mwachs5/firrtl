@@ -46,7 +46,7 @@ import firrtl.PrimOps._
 import firrtl.ir._
 import scala.collection.mutable.ArrayBuffer
 import scala.collection.mutable.LinkedHashMap
-//import scala.reflect.runtime.universe._
+import scala.collection.mutable
 
 class FIRRTLException(str: String) extends Exception(str)
 
@@ -74,6 +74,31 @@ object Utils extends LazyLogging {
         case _ => Block(newStmts)
       }
     case s => s
+  }
+
+  /** Counts the number of unique objects in a Firrtl graph
+    *   using java.util.IdentityHashMap
+    * This is not intended to be used as a metric for the size of an actual
+    *   circuit, but rather to debug the compiler itself
+    * Works because all FirrtlNodes implement Product (case classes do)
+    */
+  def countUniqueNodes(c: Circuit): Long = {
+    // Want IdentityHashSet but that doesn't exist so map to Boolean
+    val nodes = new java.util.IdentityHashMap[Any, Boolean]()
+    def onNode(node: Any): Unit = {
+      require(node.isInstanceOf[Product] || !node.isInstanceOf[FirrtlNode],
+        "Unexpected FirrtlNode that does not implement Product!")
+      if (!nodes.containsKey(node)) {
+        nodes put (node, true)
+        node match { // FirrtlNodes are Products
+          case p: Product => p.productIterator foreach onNode
+          case i: Iterable[Any] => i foreach onNode
+          case _ => // Done on leaf nodes
+        }
+      }
+    }
+    onNode(c)
+    nodes.size
   }
 
   /** Indent the results of [[ir.FirrtlNode.serialize]] */

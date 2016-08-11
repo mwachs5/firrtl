@@ -47,6 +47,8 @@ trait SimpleRun extends LazyLogging {
             val name = pass.name
             val x = Utils.time(name) { pass.run(c) }
             logger.debug(x.serialize)
+            logger.info("Number of unique nodes = " +
+              Utils.time("Count Unique Nodes"){Utils.countUniqueNodes(x)} + "\n")
             x
          }
       }
