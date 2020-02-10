@@ -146,7 +146,16 @@ object ExpandConnects extends Pass {
                }
             })
           case sx: PartialConnect =>
-            val ls = get_valid_points(sx.loc.tpe, sx.expr.tpe, Default, Default)
+            //            val ls = get_valid_points(sx.loc.tpe, sx.expr.tpe, Default, Default)
+            val ls = try {
+              get_valid_points(sx.loc.tpe, sx.expr.tpe, Default, Default)
+            } catch {
+              case e: Exception =>
+                println(s"get_valid_points failed on: ${sx.serialize}")
+                println(s"  loc.tpe  = ${sx.loc.tpe.serialize}")
+                println(s"  expr.tpe = ${sx.expr.tpe.serialize}")
+                throw e
+            }
             val locs = create_exps(sx.loc)
             val exps = create_exps(sx.expr)
             val stmts = ls map { case (x, y) =>
@@ -165,7 +174,14 @@ object ExpandConnects extends Pass {
       }
 
       m.ports.foreach { p => flows(p.name) = to_flow(p.direction) }
-      Module(m.info, m.name, m.ports, expand_s(m.body))
+      //Module(m.info, m.name, m.ports, expand_s(m.body))
+       try {
+         Module(m.info, m.name, m.ports, expand_s(m.body))
+       } catch {
+         case e: Exception =>
+           println(m.serialize)
+           throw e
+       }
     }
 
     val modulesx = c.modules.map {
