@@ -469,6 +469,8 @@ object Utils extends LazyLogging {
         if (legalResetType(other) && flip1 == Default && flip1 == flip2) Seq((0, 0)) else Nil
       case (other, ResetType) =>
         if (legalResetType(other) && flip1 == Flip && flip1 == flip2) Seq((0, 0)) else Nil
+      case (reset0, reset1) if legalResetType(reset0) && legalResetType(reset1) =>
+        if (flip1 == flip2) Seq((0, 0)) else Nil
       case _ => throwInternalError(s"get_valid_points: shouldn't be here - ($t1, $t2)")
     }
   }
